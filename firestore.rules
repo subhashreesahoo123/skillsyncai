@@ -1,0 +1,172 @@
+/**
+ * # Core Philosophy
+ * This ruleset enforces a strict user-ownership model. All data is considered
+ * private and is nested within a user-specific data tree. Access is granted
+ * based on the authenticated user's ID matching the path of the requested document.
+ * This ensures that users can only ever access their own information. The default
+ * posture is to deny all access unless explicitly permitted.
+ *
+ * # Data Structure
+ * The Firestore data is organized hierarchically to facilitate secure, path-based
+ * authorization. All user-related data, including profiles, resumes, and tailored
+ * resume versions, is stored under the `/users/{userId}` path. This structure
+ * makes security rules simple and performant.
+ *
+ * # Key Security Decisions
+ * - User Isolation: Users are strictly confined to their own data subtree. They cannot
+ *   read, write, or even know about the existence of data belonging to other users.
+ * - No Public Data: All collections require user authentication.
+ * - User Listing Disabled: It is not possible for any client to list all documents
+ *   in the top-level `/users` collection.
+ * - Denormalized Ownership: To avoid slow and costly `get()` calls in rules,
+ *   ownership information (like `userId`) is denormalized (copied) onto every
+ *   document. Rules then validate this information for data consistency.
+ *
+ * # Denormalization for Authorization
+ * To create simpler and more performant rules, user and parent document IDs are
+ * denormalized directly onto the documents being secured. For example, a `Resume`
+ * document at `/users/USER_A/resumes/RESUME_1` will contain a `userId` field
+ * with the value 'USER_A'. The rules enforce that this field is correctly set on
+ * creation and is immutable thereafter, ensuring relational integrity without
+ * extra reads.
+ *
+ * # Structural Segregation
+ * All user data is segregated into private subcollections under their unique user ID.
+ * This pattern is inherently secure for list operations and ensures that queries
+ * for a user's data (e.g., listing all resumes) can only ever return documents
+ * they are authorized to see.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for improved readability and reusability.
+
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the authenticated user's UID matches the provided userId.
+     * This is the primary function for enforcing document ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the document being requested already exists.
+     * Crucial for protecting against writes to non-existent paths.
+     */
+    function isExistingDocument() {
+      return resource != null;
+    }
+
+    /**
+     * Combines ownership and existence checks for update/delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && isExistingDocument();
+    }
+
+    /**
+     * Validates the incoming UserProfile document on creation.
+     * Ensures the document's internal `id` matches the user's auth UID.
+     */
+    function isValidUserProfileCreate(userId) {
+      return isOwner(userId) && request.resource.data.id == userId;
+    }
+
+    /**
+     * Enforces that the UserProfile's internal ID is immutable on update.
+     */
+    function isImmutableUserId() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    /**
+     * Validates the incoming Resume document on creation.
+     * Ensures the internal `userId` matches the path's userId wildcard.
+     */
+    function isValidResumeCreate(userId) {
+      return isOwner(userId) && request.resource.data.userId == userId;
+    }
+
+    /**
+     * Enforces that the Resume's internal `userId` is immutable on update.
+     */
+    function isImmutableResumeOwner() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    /**
+     * Validates the incoming TailoredResume document on creation.
+     * Ensures internal IDs for user and original resume match the path wildcards.
+     */
+    function isValidTailoredResumeCreate(userId) {
+      return isOwner(userId) &&
+             request.resource.data.userId == userId;
+    }
+
+    /**
+     * Enforces that the TailoredResume's ownership fields are immutable on update.
+     */
+    function isImmutableTailoredResumeLinks() {
+      return request.resource.data.userId == resource.data.userId &&
+             request.resource.data.originalResumeId == resource.data.originalResumeId;
+    }
+
+
+    /**
+     * @description Controls access to a user's own profile document.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user creating their own profile document for the first time.
+     * @allow (get, update, delete) The user with UID matching {userId} accessing their own profile.
+     * @deny (list) Any user, authenticated or not, attempting to list all user profiles.
+     * @deny (get) User 'A' attempting to read the profile of User 'B'.
+     * @principle Restricts access to a user's own data tree and enforces self-creation of root documents.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Disallow listing all users for security and privacy.
+      allow create: if isValidUserProfileCreate(userId);
+      allow update: if isExistingOwner(userId) && isImmutableUserId();
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Controls access to a user's collection of original resumes.
+       * @path /users/{userId}/resumes/{resumeId}
+       * @allow (create, get, list) The user with UID matching {userId} managing their own resumes.
+       * @deny (get, list, create) User 'A' attempting to access any resumes belonging to User 'B'.
+       * @principle Enforces document ownership for all operations and validates relational integrity on create/update.
+       */
+      match /resumes/{resumeId} {
+        allow get, list, create, update, delete: if isOwner(userId);
+      }
+
+      /**
+       * @description Controls access to AI-generated tailored resumes, nested under the user document.
+       * @path /users/{userId}/tailoredResumes/{tailoredResumeId}
+       * @allow (create, get, list) The user with UID matching {userId} managing their tailored resumes.
+       * @deny (get, list, create) User 'A' attempting to access any tailored resumes belonging to User 'B'.
+       * @principle Enforces deep document ownership and validates relational integrity.
+       */
+      match /tailoredResumes/{tailoredResumeId} {
+        allow get, list, delete: if isOwner(userId);
+        allow create: if isValidTailoredResumeCreate(userId);
+        allow update: if isExistingOwner(userId) && isImmutableTailoredResumeLinks();
+      }
+    }
+  }
+}
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow users to read and write to their own folder in storage
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

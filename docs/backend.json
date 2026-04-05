@@ -1,0 +1,220 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile information within the SkillSync AI application, primarily for managing account details and linking user-specific data.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity. This typically corresponds to the Firebase Authentication User ID (UID)."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for communication and as a unique identifier from the authentication system.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's preferred display name or full name."
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "An optional URL to the user's profile picture stored in Firebase Storage.",
+          "format": "uri"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "User's contact phone number."
+        },
+        "location": {
+          "type": "string",
+          "description": "User's city and country."
+        },
+        "jobRole": {
+          "type": "string",
+          "description": "User's current or desired job role."
+        },
+        "experienceLevel": {
+          "type": "string",
+          "enum": ["Entry-Level", "Mid-Level", "Senior", "Lead", "Manager"]
+        },
+        "skills": {
+          "type": "array",
+          "description": "A list of the user's professional skills.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "socialLinks": {
+          "type": "object",
+          "properties": {
+            "linkedin": { "type": "string", "format": "uri" },
+            "github": { "type": "string", "format": "uri" },
+            "portfolio": { "type": "string", "format": "uri" }
+          }
+        },
+        "defaultResume": {
+          "type": "object",
+          "properties": {
+            "fileName": { "type": "string" },
+            "storagePath": { "type": "string", "format": "uri" },
+            "uploadedAt": { "type": "string", "format": "date-time" }
+          }
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "resumesGenerated": { "type": "number" },
+            "averageMatchScore": { "type": "number" },
+            "lastActivity": { "type": "string", "format": "date-time" }
+          }
+        },
+        "subscription": {
+          "type": "object",
+          "description": "Manages the user's subscription plan and status.",
+          "properties": {
+            "plan": {
+              "type": "string",
+              "enum": ["Free", "Pro", "Premium"],
+              "description": "The user's current subscription tier."
+            },
+            "status": {
+              "type": "string",
+              "enum": ["active", "inactive", "trialing", "past_due"],
+              "description": "The current status of the subscription."
+            },
+            "currentPeriodEnds": {
+              "type": "string",
+              "format": "date-time",
+              "description": "The timestamp for when the current subscription period ends."
+            }
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user's profile was first created.",
+          "format": "date-time"
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "description": "Timestamp indicating the last time the user logged into the application.",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "email", "createdAt"]
+    },
+    "Resume": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Resume",
+      "type": "object",
+      "description": "Stores details about an original resume uploaded by a user, including its content and the job description it was paired with for a tailoring session.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "originalFileName": { "type": "string" },
+        "originalFileStoragePath": { "type": "string", "format": "uri" },
+        "uploadedAt": { "type": "string", "format": "date-time" },
+        "parsedContent": { "type": "string" },
+        "jobDescriptionText": { "type": "string" },
+        "jobDescriptionFileName": { "type": "string" },
+        "jobDescriptionFileStoragePath": { "type": "string", "format": "uri" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "originalFileName",
+        "originalFileStoragePath",
+        "uploadedAt",
+        "parsedContent",
+        "jobDescriptionText"
+      ]
+    },
+    "TailoredResume": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TailoredResume",
+      "type": "object",
+      "description": "Captures the results of an AI-powered resume tailoring session, linking to the original resume and user, and providing version history.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "originalResumeId": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "company": { "type": "string" },
+        "versionNumber": { "type": "number" },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "tailoredContent": { "type": "string" },
+        "atsScore": { "type": "number" },
+        "keywordAnalysis": {
+          "type": "object",
+          "properties": {
+            "matched": { "type": "array", "items": { "type": "string" } },
+            "missing": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "strengths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "suggestions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "downloadUrl": { "type": "string", "format": "uri" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "originalResumeId",
+        "jobTitle",
+        "company",
+        "versionNumber",
+        "generatedAt",
+        "tailoredContent"
+      ]
+    }
+  },
+  "auth": {
+    "providers": ["password", "anonymous"]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": { "$ref": "#/backend/entities/UserProfile" },
+          "description": "Stores individual user profile information. Access is restricted to the authenticated user matching the 'userId' in the path."
+        }
+      },
+      {
+        "path": "/users/{userId}/resumes/{resumeId}",
+        "definition": {
+          "entityName": "Resume",
+          "schema": { "$ref": "#/backend/entities/Resume" },
+          "description": "Stores original resume uploads and associated job descriptions for a specific user.",
+          "params": [
+            { "name": "userId" },
+            { "name": "resumeId" }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/tailoredResumes/{tailoredResumeId}",
+        "definition": {
+          "entityName": "TailoredResume",
+          "schema": { "$ref": "#/backend/entities/TailoredResume" },
+          "description": "Stores AI-generated tailored resume versions linked to an original resume. Includes denormalized 'userId' field for authorization independence.",
+          "params": [
+            { "name": "userId" },
+            { "name": "tailoredResumeId" }
+          ]
+        }
+      }
+    ]
+  },
+  "storage": {
+    "rules": "rules_version = '2';\nservice firebase.storage {\n  match /b/{bucket}/o {\n    match /users/{userId}/{allPaths=**} {\n      allow read, write: if request.auth != null && request.auth.uid == userId;\n    }\n  }\n}"
+  }
+}
