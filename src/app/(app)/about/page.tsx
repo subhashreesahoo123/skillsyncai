@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, BrainCircuit, Cpu, Database, Rocket, Sparkles } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Cpu, Database, Rocket, Sparkles, Globe } from 'lucide-react';
 import Link from 'next/link';
 
 const techStack = [
@@ -35,9 +35,22 @@ export default function AboutPage() {
             </p>
         </CardContent>
       </Card>
+      
+      {/* Vision Section */}
+      <Card className="animate-fade-in-up" style={{animationDelay: '300ms'}}>
+        <CardHeader className="text-center">
+            <Globe className="mx-auto h-12 w-12 text-primary mb-2" />
+            <CardTitle className="font-headline text-3xl">Our Vision</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <p className="text-center text-xl text-muted-foreground max-w-4xl mx-auto">
+                To forge a future where career advancement is universally accessible, empowering every individual to bridge the gap between their potential and their dream opportunity. We envision a world where AI eliminates barriers, ensuring that skill and talent—not application hurdles—define professional success on a global scale.
+            </p>
+        </CardContent>
+      </Card>
 
       {/* How It Works */}
-      <div className="animate-fade-in-up" style={{animationDelay: `300ms`}}>
+      <div className="animate-fade-in-up" style={{animationDelay: `450ms`}}>
         <div className="text-center mb-8">
             <h2 className="font-headline text-3xl font-bold tracking-tight">How It Works</h2>
             <p className="mt-2 text-lg text-muted-foreground">A simple, four-step process to success.</p>
@@ -53,7 +66,7 @@ export default function AboutPage() {
       </div>
       
       {/* Tech Stack */}
-      <div className="animate-fade-in-up" style={{animationDelay: `450ms`}}>
+      <div className="animate-fade-in-up" style={{animationDelay: `600ms`}}>
         <div className="text-center mb-8">
             <h2 className="font-headline text-3xl font-bold tracking-tight">Our Technology</h2>
             <p className="mt-2 text-lg text-muted-foreground">Built with a modern, scalable, and secure tech stack.</p>
@@ -70,7 +83,7 @@ export default function AboutPage() {
       </div>
 
       {/* CTA Section */}
-      <div className="text-center p-8 rounded-lg bg-gradient-to-r from-primary/20 to-blue-500/20 animate-fade-in-up" style={{animationDelay: `600ms`}}>
+      <div className="text-center p-8 rounded-lg bg-gradient-to-r from-primary/20 to-blue-500/20 animate-fade-in-up" style={{animationDelay: `750ms`}}>
          <h2 className="font-headline text-3xl font-bold">Start Building Your Perfect Resume Today 🚀</h2>
          <p className="mt-4 text-lg text-muted-foreground">Stop getting rejected by algorithms. Start landing interviews.</p>
          <Button size="lg" className="mt-6" asChild>
