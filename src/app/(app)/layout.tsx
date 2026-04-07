@@ -42,7 +42,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith('/dashboard')) return 'Dashboard';
     if (pathname.startsWith('/history')) return 'History';
     if (pathname.startsWith('/profile')) return 'Profile & Analytics';
-    if (pathname.startsWith('/pricing')) return 'Pricing';
+    if (pathname.startsWith('/pricing')) return 'Subscription';
     if (pathname.startsWith('/about')) return 'About Us';
     return 'SkillSync AI';
   };
@@ -83,11 +83,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuButton
                 asChild
                 isActive={pathname.startsWith('/pricing')}
-                tooltip="Pricing"
+                tooltip="Subscription"
               >
                 <Link href="/pricing">
                   <CreditCard />
-                  <span>Pricing</span>
+                  <span>Subscription</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

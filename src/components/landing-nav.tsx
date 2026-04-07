@@ -14,7 +14,7 @@ const navLinks = [
   { href: '#features', label: 'Features' },
   { href: '#problem', label: 'The Problem' },
   { href: '#solution', label: 'How It Works' },
-  { href: '/pricing', label: 'Pricing' },
+  { href: '/pricing', label: 'Subscription' },
   { href: '/about', label: 'About' },
 ];
 
