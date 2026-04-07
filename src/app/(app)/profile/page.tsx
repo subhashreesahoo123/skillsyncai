@@ -523,7 +523,7 @@ export default function ProfilePage() {
               <FormField control={form.control} name="phoneNumber" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
-                    <FormControl><InputWithIcon {...field} placeholder="+1 234 567 890" prependIcon={Phone} /></FormControl>
+                    <FormControl><InputWithIcon {...field} placeholder="+91 234 567 890" prependIcon={Phone} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
