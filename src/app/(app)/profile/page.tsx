@@ -269,7 +269,7 @@ export default function ProfilePage() {
         jobRole: userProfile.jobRole || '',
         experienceLevel: userProfile.experienceLevel || '',
         location: userProfile.location || '',
-        phoneNumber: userProfile.phoneNumber || '',
+        phoneNumber: userProfile.phoneNumber ? userProfile.phoneNumber.replace(/^\+91/, '') : '',
         socialLinks: userProfile.socialLinks || { linkedin: '', github: '', portfolio: '' },
         skills: userProfile.skills || [],
       });
@@ -380,14 +380,20 @@ export default function ProfilePage() {
         await updateProfile(user, { displayName: data.displayName });
       }
       const userDocRef = doc(firestore, 'users', user.uid);
+      
+      const saveData = {
+        ...data,
+        phoneNumber: data.phoneNumber ? `+91${data.phoneNumber}` : '',
+      };
+
       setDocumentNonBlocking(userDocRef, {
-        displayName: data.displayName,
-        jobRole: data.jobRole,
-        experienceLevel: data.experienceLevel,
-        location: data.location,
-        phoneNumber: data.phoneNumber,
-        socialLinks: data.socialLinks,
-        skills: data.skills,
+        displayName: saveData.displayName,
+        jobRole: saveData.jobRole,
+        experienceLevel: saveData.experienceLevel,
+        location: saveData.location,
+        phoneNumber: saveData.phoneNumber,
+        socialLinks: saveData.socialLinks,
+        skills: saveData.skills,
         lastLoginAt: new Date().toISOString(),
       }, { merge: true });
 
@@ -523,7 +529,17 @@ export default function ProfilePage() {
               <FormField control={form.control} name="phoneNumber" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
-                    <FormControl><InputWithIcon {...field} placeholder="+91 234 567 890" prependIcon={Phone} /></FormControl>
+                    <FormControl>
+                      <div className="flex h-10 w-full items-center rounded-md border border-input bg-background text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                        <span className="flex h-full items-center border-r bg-muted px-3 text-muted-foreground">+91</span>
+                        <Input
+                          {...field}
+                          type="tel"
+                          placeholder="234 567 890"
+                          className="w-full border-0 bg-transparent p-2 shadow-none focus-visible:ring-0"
+                        />
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
